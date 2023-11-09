@@ -183,6 +183,9 @@ func shuttleUnmarshal(out any, unmarshal func(any, reflect.Type, reflect.Type) e
 				outVal.Field(i).Set(inValIdxi)
 				continue
 			}
+			if inValIdxi.Len() == 0 {
+				continue
+			}
 			newSliceVal := reflect.MakeSlice(outValTypeIdxi, inValIdxi.Len(), inValIdxi.Len())
 			for i, n := 0, inValIdxi.Len(); i < n; i++ {
 
