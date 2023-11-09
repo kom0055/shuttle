@@ -1,0 +1,67 @@
+{
+	"field1": "field1",
+	"filed2": [
+		{
+			"kind": "impl2",
+			"value": {
+				"how": "2"
+			}
+		},
+		{
+			"kind": "impl1",
+			"value": {
+				"what": "3"
+			}
+		},
+		{
+			"kind": "impl2",
+			"value": {
+				"how": "4"
+			}
+		},
+		{
+			"kind": "impl5",
+			"value": {
+				"who": "kun"
+			}
+		}
+	],
+	"field3": 3,
+	"field4": {
+		"kind": "impl1",
+		"value": {
+			"what": "5"
+		}
+	},
+	"filed5": [
+		{
+			"kind": "impl1",
+			"value": {
+				"what": "6"
+			}
+		},
+		{
+			"kind": "impl1",
+			"value": {
+				"what": "7"
+			}
+		},
+		{
+			"kind": "impl2",
+			"value": {
+				"how": "8"
+			}
+		},
+		{
+			"kind": "impl2",
+			"value": {
+				"how": "9"
+			}
+		}
+	],
+	"field6": [
+		"a",
+		"b",
+		"c"
+	]
+}

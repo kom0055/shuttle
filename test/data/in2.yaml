@@ -1,0 +1,14 @@
+field1:
+    - kind: impl1
+      value:
+        what: a2what
+    - kind: impl2
+      value:
+        how: a2how
+    - kind: impl3
+      value:
+        when: 1111111
+field2:
+    kind: impl5
+    value:
+        who: peng
