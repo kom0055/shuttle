@@ -9,17 +9,11 @@ import (
 )
 
 func MarshalYaml(in any) (any, error) {
-	return shuttleMarshal(in)
+	return globalProvider.MarshalYaml(in)
 }
 
 func UnmarshalYaml(out any, unmarshal func(any) error) error {
-
-	return shuttleUnmarshal(out, func(a any, inType, outTyp reflect.Type) error {
-		if err := unmarshal(a); err != nil {
-			return ReplaceYAMLTypeError(err, inType, outTyp)
-		}
-		return nil
-	})
+	return globalProvider.UnmarshalYaml(out, unmarshal)
 
 }
 
