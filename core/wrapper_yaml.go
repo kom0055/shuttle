@@ -10,7 +10,7 @@ var (
 	invalidYamlErr = errors.New("invalid yaml")
 )
 
-func (c *Wrapper) UnmarshalYAML(value *yaml.Node) error {
+func (c *_Wrapper) UnmarshalYAML(value *yaml.Node) error {
 
 	return c.unmarshal(func() (string, error) {
 		if value == nil {

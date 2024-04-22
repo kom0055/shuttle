@@ -5,15 +5,16 @@ import (
 	"reflect"
 )
 
-type KindGetter func() (string, error)
-type ValueGetter func(any) error
+type _KindGetter func() (string, error)
+type _ValueGetter func(any) error
 
-type Wrapper struct {
-	Kind  string `json:"kind,omitempty" yaml:"kind,omitempty"`
-	Value any    `json:"value,omitempty" yaml:"value,omitempty"`
+type _Wrapper struct {
+	Kind        string `json:"kind,omitempty" yaml:"kind,omitempty"`
+	Value       any    `json:"value,omitempty" yaml:"value,omitempty"`
+	valueGetter _ValueGetter
 }
 
-func (c *Wrapper) unmarshal(kindGetter KindGetter, valueGetter ValueGetter) error {
+func (c *_Wrapper) unmarshal(kindGetter _KindGetter, valueGetter _ValueGetter) error {
 	if kindGetter == nil || valueGetter == nil {
 		return fmt.Errorf("kindGetter or valueGetter is nil")
 	}
@@ -21,9 +22,16 @@ func (c *Wrapper) unmarshal(kindGetter KindGetter, valueGetter ValueGetter) erro
 	if err != nil {
 		return err
 	}
-	outPutType, err := globalProvider.getTypeByName(kind)
+	*c = _Wrapper{}
+	c.Kind = kind
+	c.valueGetter = valueGetter
+	return nil
+}
+
+func (c *_Wrapper) getValue(p *provider) (any, error) {
+	outPutType, err := p.getTypeByName(c.Kind)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	outPutPtr := reflect.New(outPutType)
 	outPutKind := outPutType.Kind()
@@ -33,14 +41,11 @@ func (c *Wrapper) unmarshal(kindGetter KindGetter, valueGetter ValueGetter) erro
 		outPutPtr.Elem().Set(reflect.New(elemTyp))
 	case reflect.Struct:
 	default:
-		return fmt.Errorf("unsupport reflect kind: %v, type: %v", outPutKind.String(), outPutType.String())
+		return nil, fmt.Errorf("unsupport reflect kind: %v, type: %v", outPutKind.String(), outPutType.String())
 	}
-	if err := valueGetter(outPutPtr.Interface()); err != nil {
-		return err
+	if err := c.valueGetter(outPutPtr.Interface()); err != nil {
+		return nil, err
 	}
-	v := outPutPtr.Elem().Interface().(any)
-	*c = Wrapper{}
-	c.Value = v
-	c.Kind = kind
-	return nil
+	v := outPutPtr.Elem().Interface()
+	return v, nil
 }

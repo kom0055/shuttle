@@ -7,8 +7,8 @@ import (
 
 var (
 	emptyValue       = reflect.Value{}
-	WrapperType      = reflect.TypeOf(Wrapper{})
-	WrapperSliceType = reflect.TypeOf([]Wrapper{})
+	WrapperType      = reflect.TypeOf(_Wrapper{})
+	WrapperSliceType = reflect.TypeOf([]_Wrapper{})
 )
 
 func RevealInterface(val reflect.Value) reflect.Value {

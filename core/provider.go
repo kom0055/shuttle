@@ -15,10 +15,20 @@ const (
 )
 
 var (
-	globalProvider = newProvider()
+	globalProvider = NewProvider()
 )
 
-func newProvider() *provider {
+type Provider interface {
+	RegisterType(name string, id any) error
+	MarshalJson(in any) ([]byte, error)
+	UnmarshalJson(out any, raw json.RawMessage) error
+	MarshalMsgPack(in any) ([]byte, error)
+	UnmarshalMsgPack(out any, b []byte) error
+	MarshalYaml(in any) (any, error)
+	UnmarshalYaml(out any, unmarshal func(any) error) error
+}
+
+func NewProvider() Provider {
 	return &provider{
 		type2NameMap:   cmap.NewStringer[reflect.Type, string](),
 		name2TypeMap:   cmap.New[reflect.Type](),
@@ -48,10 +58,10 @@ func (p *provider) getMarshalType(inType reflect.Type) reflect.Type {
 
 }
 
-func (p *provider) getTypeByName(string2 string) (reflect.Type, error) {
-	t, ok := p.name2TypeMap.Get(string2)
+func (p *provider) getTypeByName(name string) (reflect.Type, error) {
+	t, ok := p.name2TypeMap.Get(name)
 	if !ok {
-		return nil, fmt.Errorf("type %s not found", string2)
+		return nil, fmt.Errorf("type %s not found", name)
 	}
 	return t, nil
 }
@@ -199,38 +209,37 @@ func (p *provider) shuttleUnmarshal(out any, unmarshal func(any, reflect.Type, r
 		inValIdxi := inVal.Field(i)
 		fieldTypeIdxi := inValIdxi.Type()
 		fieldTypeIdxi = RevealType(fieldTypeIdxi)
-		if fieldTypeIdxi == WrapperSliceType {
+		switch fieldTypeIdxi {
+		case WrapperSliceType:
+			inValItems := inValIdxi.Interface().([]_Wrapper)
 			outValIdxi := outVal.Field(i)
 			outValTypeIdxi := outValIdxi.Type()
 
-			cvTyp := fieldTypeIdxi.Elem()
-			if cvTyp != WrapperType {
-				outVal.Field(i).Set(inValIdxi)
+			if len(inValItems) == 0 {
 				continue
 			}
-			if inValIdxi.Len() == 0 {
-				continue
-			}
-			newSliceVal := reflect.MakeSlice(outValTypeIdxi, inValIdxi.Len(), inValIdxi.Len())
-			for i, n := 0, inValIdxi.Len(); i < n; i++ {
 
-				val := inValIdxi.Index(i)
-				field1 := val.Field(1)
-				field1 = RevealInterface(field1)
-				newSliceVal.Index(i).Set(field1)
+			newSliceVal := reflect.MakeSlice(outValTypeIdxi, inValIdxi.Len(), inValIdxi.Len())
+			for i := range inValItems {
+				item := inValItems[i]
+				realVal, err := item.getValue(p)
+				if err != nil {
+					return err
+				}
+				newSliceVal.Index(i).Set(reflect.ValueOf(realVal))
 			}
 			outVal.Field(i).Set(newSliceVal)
 			continue
-		}
-
-		if fieldTypeIdxi == WrapperType {
-			val := inValIdxi
-
-			field1 := val.Field(1)
-			field1 = RevealInterface(field1)
-			outVal.Field(i).Set(field1)
-
+		case WrapperType:
+			item := inValIdxi.Interface().(_Wrapper)
+			realVal, err := item.getValue(p)
+			if err != nil {
+				return err
+			}
+			outVal.Field(i).Set(reflect.ValueOf(realVal))
 			continue
+		default:
+
 		}
 		outVal.Field(i).Set(inValIdxi)
 	}
@@ -246,7 +255,7 @@ func (p *provider) wrapValue(oriVal reflect.Value) (reflect.Value, error) {
 		return emptyValue, err
 	}
 
-	wrapper := Wrapper{
+	wrapper := _Wrapper{
 		Kind:  name,
 		Value: oriVal.Interface(),
 	}
